@@ -1,96 +1,96 @@
-# Obsidian Sample Plugin
+# Lazarus Transcript Plugin for Obsidian
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+Lazarus Transcript is an Obsidian plugin that enables a lightweight syntax for creating inline quotes and dialogues with support for markdown formatting. This plugin is perfect for transcribing conversations, quotes, or dialogues in a visually appealing way while using standard markdown for styling, such as _italic_ and **bold**.
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+## Installation
 
-**Note:** The Obsidian API is still in early alpha and is subject to change at any time!
+1. **Download the plugin**:
+   - Clone or download this repository to your local machine.
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+2. **Install the plugin**:
+   - In Obsidian, open the **Settings** menu.
+   - Go to the **Community Plugins** section.
+   - Enable **Safe Mode** (if not already enabled).
+   - Click on **Open Plugins Folder**.
+   - Copy the downloaded folder containing the plugin into this directory.
 
-## First time developing plugins?
+3. **Enable the plugin**:
+   - Go back to Obsidian and open the **Settings** menu again.
+   - Go to **Community Plugins**.
+   - Enable the "Lazarus Transcript" plugin.
 
-Quick starting guide for new plugin devs:
+## Usage
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+### Syntax
 
-## Releasing new releases
+Once the plugin is enabled, you can use the `lt` code block to create inline quotes and dialogue.
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+Here’s a typical usage example:
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
+\`\`\`lt
+Timmy
+How do you do, sir?
+\`\`\`
 
-## Adding your plugin to the community plugin list
+This will render as:
 
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+> **Timmy**: How do you do, sir?
 
-## How to use
+You can also use multiple lines with markdown formatting:
 
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+\`\`\`lt
+Timmy
+How do you do, sir?
+\`\`\`
 
-## Manually installing the plugin
+\`\`\`lt
+James
+I'm fine, thank you!
+_And you?_
+\`\`\`
 
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
+This will render:
 
-## Improve code quality with eslint (optional)
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- To use eslint with this project, make sure to install eslint from terminal:
-  - `npm install -g eslint`
-- To use eslint to analyze this project use this command:
-  - `eslint main.ts`
-  - eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder:
-  - `eslint .\src\`
+> **Timmy**: How do you do, sir?  
+> **James**: I'm fine, thank you!
+>            _And you?_
 
-## Funding URL
+### Customizing Margins
 
-You can include funding URLs where people who use your plugin can financially support it.
+You can adjust the margin width around your quotes to suit your preference:
 
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
+1. Open **Settings** > **Lazarus Transcript**.
+2. Adjust the **Margin Width** (e.g., `10rem`, `15px`, `auto`, or `max-content`).
 
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
-```
+This allows you to fine-tune the visual layout of your dialogues to fit the style of your note.
 
-If you have multiple URLs, you can also do:
+## Development
 
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
-```
+### Prerequisites
 
-## API Documentation
+- [Node.js](https://nodejs.org/)
+- [Obsidian](https://obsidian.md/)
 
-See https://github.com/obsidianmd/obsidian-api
+### Build Instructions
+
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/Fermain/lazarus-transcript.git
+   cd lazarus-transcript
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Build the plugin:
+   ```bash
+   npm run build
+   ```
+
+4. Copy the `main.js` and `manifest.json` files from the `dist/` folder into your Obsidian plugins folder.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
