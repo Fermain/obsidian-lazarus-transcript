@@ -23,37 +23,37 @@ Lazarus Transcript is an Obsidian plugin that enables a lightweight syntax for c
 
 ### Syntax
 
-Once the plugin is enabled, you can use the `lt` code block to create inline quotes and dialogue.
+Once the plugin is enabled, you can create inline quotes and dialogues using the `lt` code block.
 
-Here’s a typical usage example:
+#### Basic Example
 
-\`\`\`lt
+```lt
 Timmy
 How do you do, sir?
-\`\`\`
+```
 
 This will render as:
 
 > **Timmy**: How do you do, sir?
 
-You can also use multiple lines with markdown formatting:
+#### Multi-line Example with Markdown
 
-\`\`\`lt
-Timmy
+You can also use markdown formatting (e.g., _italic_, **bold**) within your dialogues.
+
+```lt
+Unknown (Male)
 How do you do, sir?
-\`\`\`
 
-\`\`\`lt
 James
-I'm fine, thank you!
+I'm fine, thank you!  
 _And you?_
-\`\`\`
+```
 
-This will render:
+This will render as:
 
-> **Timmy**: How do you do, sir?  
-> **James**: I'm fine, thank you!
->            _And you?_
+> **Unknown (Male)**: How do you do, sir?  
+> **James**: I'm fine, thank you!  
+> _And you?_
 
 ### Customizing Margins
 

@@ -1,8 +1,24 @@
-/*
+.lt {
+	display: grid;
+	grid-template-columns: var(--lt-margin-width, 10rem) 1fr;
+	gap: 1rem;
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+	& strong {
+		grid-row: 1;
+		grid-column: 1;
+	}
 
-If your plugin does not need CSS, delete this file.
+	&, & q {
+		margin: 0;
+	}
 
-*/
+	& q {
+		white-space: pre-wrap;
+		grid-column: 2;
+
+		&::before,
+		&::after {
+			content: "";
+		}
+	}
+}
