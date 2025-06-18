@@ -1,10 +1,9 @@
 .lt {
 	display: grid;
 	grid-template-columns: var(--lt-margin-width, 10rem) 1fr;
-	gap: 1rem;
 
 	& strong {
-		grid-row: 1;
+		grid-row: span 2;
 		grid-column: 1;
 	}
 
