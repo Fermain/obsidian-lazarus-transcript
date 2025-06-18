@@ -1,34 +1,81 @@
-﻿name: Release Obsidian plugin
+﻿name: Release Obsidian Plugin
 
 on:
   push:
-    tags:
-      - "*"
+    branches: [master, main]
+    paths: ['manifest.json']
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Use Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: "18.x"
+          node-version: '18.x'
+
+      - name: Get version from manifest
+        id: version
+        run: echo "version=$(node -p "require('./manifest.json').version")" >> $GITHUB_OUTPUT
+
+      - name: Check if tag exists
+        id: tag_check
+        run: |
+          if git rev-parse "refs/tags/${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install dependencies
+        if: steps.tag_check.outputs.exists == 'false'
+        run: npm install
 
       - name: Build plugin
-        run: |
-          npm install
-          npm run build
+        if: steps.tag_check.outputs.exists == 'false'
+        run: npm run build
 
-      - name: Create release
+      - name: Create tag
+        if: steps.tag_check.outputs.exists == 'false'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag ${{ steps.version.outputs.version }}
+          git push origin ${{ steps.version.outputs.version }}
+
+      - name: Create Release
+        if: steps.tag_check.outputs.exists == 'false'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          tag="${GITHUB_REF#refs/tags/}"
-
-          gh release create "$tag" \
-            --title="$tag" \
-            --draft \
+          VERSION=${{ steps.version.outputs.version }}
+          
+          # Extract release notes from git commits since last tag
+          LAST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -n "$LAST_TAG" ]; then
+            RELEASE_NOTES=$(git log --pretty=format:"- %s" ${LAST_TAG}..HEAD | grep -v "^- Merge\|^- Release\|^- Version bump" | head -20)
+          else
+            RELEASE_NOTES="- Initial release of Lazarus Transcript Plugin"
+          fi
+          
+          # Create release with auto-generated notes if no commits found
+          if [ -z "$RELEASE_NOTES" ]; then
+            RELEASE_NOTES="- Bug fixes and improvements"
+          fi
+          
+          gh release create "$VERSION" \
+            --title="Lazarus Transcript Plugin v$VERSION" \
+            --notes="$RELEASE_NOTES" \
             main.js manifest.json styles.css
+
+      - name: Upload to release
+        if: steps.tag_check.outputs.exists == 'false'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          gh release upload "$VERSION" main.js manifest.json styles.css --clobber
