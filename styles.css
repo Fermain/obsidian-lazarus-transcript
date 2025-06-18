@@ -20,4 +20,9 @@
 			content: "";
 		}
 	}
+
+	/* Clickable styles for edit functionality */
+	& .lt-clickable {
+		cursor: pointer;
+	}
 }
