@@ -38,17 +38,49 @@ jobs:
         id: current_version
         run: echo "version=$(node -p "require('./manifest.json').version")" >> $GITHUB_OUTPUT
 
+      - name: Validate custom version
+        if: github.event.inputs.custom_version != ''
+        run: |
+          CUSTOM_VERSION="${{ github.event.inputs.custom_version }}"
+          if ! echo "$CUSTOM_VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "Error: Custom version '$CUSTOM_VERSION' is not valid. Must be in format X.Y.Z (e.g., 1.2.3)"
+            exit 1
+          fi
+          echo "Custom version '$CUSTOM_VERSION' is valid"
+
       - name: Calculate new version
         id: new_version
         run: |
           if [ -n "${{ github.event.inputs.custom_version }}" ]; then
             NEW_VERSION="${{ github.event.inputs.custom_version }}"
+            echo "Using custom version: $NEW_VERSION"
           else
             CURRENT_VERSION="${{ steps.current_version.outputs.version }}"
-            IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_VERSION"
+            echo "Current version: $CURRENT_VERSION"
+            
+            # Normalize version to ensure 3 parts (add .0 if needed)
+            NORMALIZED_VERSION="$CURRENT_VERSION"
+            DOTS=$(echo "$CURRENT_VERSION" | grep -o '\.' | wc -l)
+            
+            if [ "$DOTS" -eq 0 ]; then
+              NORMALIZED_VERSION="$CURRENT_VERSION.0.0"
+            elif [ "$DOTS" -eq 1 ]; then
+              NORMALIZED_VERSION="$CURRENT_VERSION.0"
+            fi
+            
+            echo "Normalized version: $NORMALIZED_VERSION"
+            
+            # Parse version parts
+            IFS='.' read -ra VERSION_PARTS <<< "$NORMALIZED_VERSION"
             MAJOR=${VERSION_PARTS[0]}
             MINOR=${VERSION_PARTS[1]}
             PATCH=${VERSION_PARTS[2]}
+            
+            # Validate version parts are numbers
+            if ! [[ "$MAJOR" =~ ^[0-9]+$ ]] || ! [[ "$MINOR" =~ ^[0-9]+$ ]] || ! [[ "$PATCH" =~ ^[0-9]+$ ]]; then
+              echo "Error: Invalid version format in manifest.json: $CURRENT_VERSION"
+              exit 1
+            fi
             
             case "${{ github.event.inputs.version_type }}" in
               "major")
@@ -66,47 +98,90 @@ jobs:
             esac
             
             NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+            echo "Calculated new version: $NEW_VERSION"
           fi
           
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          echo "Bumping version from ${{ steps.current_version.outputs.version }} to $NEW_VERSION"
+          echo "📈 Bumping version from ${{ steps.current_version.outputs.version }} to $NEW_VERSION"
+
+      - name: Check if version already exists
+        run: |
+          NEW_VERSION="${{ steps.new_version.outputs.version }}"
+          if git rev-parse "refs/tags/$NEW_VERSION" >/dev/null 2>&1; then
+            echo "Error: Version $NEW_VERSION already exists as a git tag"
+            exit 1
+          fi
+          echo "Version $NEW_VERSION is available"
 
       - name: Update manifest.json
         run: |
           node -e "
           const fs = require('fs');
-          const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
-          manifest.version = '${{ steps.new_version.outputs.version }}';
-          fs.writeFileSync('manifest.json', JSON.stringify(manifest, null, 2) + '\n');
+          try {
+            const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
+            manifest.version = '${{ steps.new_version.outputs.version }}';
+            fs.writeFileSync('manifest.json', JSON.stringify(manifest, null, 2) + '\n');
+            console.log('✅ Updated manifest.json');
+          } catch (error) {
+            console.error('❌ Error updating manifest.json:', error.message);
+            process.exit(1);
+          }
           "
 
       - name: Update versions.json
         run: |
           node -e "
           const fs = require('fs');
-          const versions = JSON.parse(fs.readFileSync('versions.json', 'utf8'));
-          versions['${{ steps.new_version.outputs.version }}'] = '0.12.0';
-          fs.writeFileSync('versions.json', JSON.stringify(versions, null, 2) + '\n');
+          try {
+            const versions = JSON.parse(fs.readFileSync('versions.json', 'utf8'));
+            versions['${{ steps.new_version.outputs.version }}'] = '0.12.0';
+            fs.writeFileSync('versions.json', JSON.stringify(versions, null, 2) + '\n');
+            console.log('✅ Updated versions.json');
+          } catch (error) {
+            console.error('❌ Error updating versions.json:', error.message);
+            process.exit(1);
+          }
           "
 
       - name: Update package.json
         run: |
           node -e "
           const fs = require('fs');
-          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-          pkg.version = '${{ steps.new_version.outputs.version }}';
-          fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          try {
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            pkg.version = '${{ steps.new_version.outputs.version }}';
+            fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+            console.log('✅ Updated package.json');
+          } catch (error) {
+            console.error('❌ Error updating package.json:', error.message);
+            process.exit(1);
+          }
           "
+
+      - name: Verify changes
+        run: |
+          echo "Verifying file changes..."
+          git diff --name-only
+          echo "Files changed:"
+          git status --porcelain
 
       - name: Commit and push changes
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add manifest.json versions.json package.json
+          
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 1
+          fi
+          
           git commit -m "Version bump to ${{ steps.new_version.outputs.version }}"
           git push
 
       - name: Summary
         run: |
+          echo "## 🎉 Version Bump Complete!"
           echo "✅ Version bumped from ${{ steps.current_version.outputs.version }} to ${{ steps.new_version.outputs.version }}"
-          echo "🚀 This will trigger an automated release when the changes are pushed to master" 
+          echo "🚀 This will trigger an automated release"
+          echo "📦 Release will be available at: https://github.com/${{ github.repository }}/releases/tag/${{ steps.new_version.outputs.version }}" 
