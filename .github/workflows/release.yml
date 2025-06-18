@@ -2,9 +2,8 @@
 
 on:
   push:
-    branches: [master, main]
-    paths: ['manifest.json']
-  workflow_dispatch:
+    tags:
+      - "*"
 
 jobs:
   build:
@@ -12,104 +11,25 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Fetch full history for tag operations
 
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18.x'
 
-      - name: Get version from manifest
-        id: version
-        run: echo "version=$(node -p "require('./manifest.json').version")" >> $GITHUB_OUTPUT
-
-      - name: Check if tag exists
-        id: tag_check
-        run: |
-          if git rev-parse "refs/tags/${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-            echo "Tag ${{ steps.version.outputs.version }} already exists, skipping release"
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-            echo "Tag ${{ steps.version.outputs.version }} does not exist, proceeding with release"
-          fi
-
       - name: Install dependencies
-        if: steps.tag_check.outputs.exists == 'false'
         run: npm install
 
       - name: Build plugin
-        if: steps.tag_check.outputs.exists == 'false'
         run: npm run build
 
-      - name: Verify build files
-        if: steps.tag_check.outputs.exists == 'false'
-        run: |
-          if [ ! -f "main.js" ]; then
-            echo "Error: main.js not found after build"
-            exit 1
-          fi
-          if [ ! -f "manifest.json" ]; then
-            echo "Error: manifest.json not found"
-            exit 1
-          fi
-          if [ ! -f "styles.css" ]; then
-            echo "Error: styles.css not found"
-            exit 1
-          fi
-          echo "All required files verified"
-
-      - name: Generate release notes
-        if: steps.tag_check.outputs.exists == 'false'
-        id: release_notes
-        run: |
-          VERSION=${{ steps.version.outputs.version }}
-          
-          # Get the last tag (if any)
-          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          
-          if [ -n "$LAST_TAG" ]; then
-            echo "Generating release notes from $LAST_TAG to HEAD"
-            COMMITS=$(git log --pretty=format:"- %s" ${LAST_TAG}..HEAD | grep -v "^- Merge\|^- Version bump\|^- Release" | head -10)
-          else
-            echo "No previous tags found, using recent commits"
-            COMMITS=$(git log --pretty=format:"- %s" -5 | grep -v "^- Merge\|^- Version bump\|^- Release")
-          fi
-          
-          # Fallback if no commits found
-          if [ -z "$COMMITS" ]; then
-            COMMITS="- Plugin improvements and bug fixes"
-          fi
-          
-          # Save to file to handle multiline content
-          echo "$COMMITS" > release_notes.txt
-          echo "Generated release notes:"
-          cat release_notes.txt
-
-      - name: Create tag and release
-        if: steps.tag_check.outputs.exists == 'false'
+      - name: Create release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION=${{ steps.version.outputs.version }}
+          tag="${GITHUB_REF#refs/tags/}"
           
-          # Configure git
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          
-          # Create and push tag
-          git tag "$VERSION"
-          git push origin "$VERSION"
-          
-          # Create release with files
-          gh release create "$VERSION" \
-            --title="Lazarus Transcript Plugin v$VERSION" \
-            --notes-file="release_notes.txt" \
+          gh release create "$tag" \
+            --title="$tag" \
+            --generate-notes \
             main.js manifest.json styles.css
-
-      - name: Release summary
-        if: steps.tag_check.outputs.exists == 'false'
-        run: |
-          echo "✅ Successfully created release v${{ steps.version.outputs.version }}"
-          echo "🔗 Release URL: https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.version }}"
