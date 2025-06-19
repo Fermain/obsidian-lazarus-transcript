@@ -4,20 +4,17 @@ Lazarus Transcript is an Obsidian plugin that enables a lightweight syntax for c
 
 ## Installation
 
-1. **Download the plugin**:
-   - Clone or download this repository to your local machine.
+### From Community Plugins (Recommended)
 
-2. **Install the plugin**:
-   - In Obsidian, open the **Settings** menu.
-   - Go to the **Community Plugins** section.
-   - Enable **Safe Mode** (if not already enabled).
-   - Click on **Open Plugins Folder**.
-   - Copy the downloaded folder containing the plugin into this directory.
+1. In Obsidian, open **Settings** → **Community Plugins**
+2. Click **Browse** and search for "Lazarus Transcript"  
+3. Click **Install** and then **Enable**
 
-3. **Enable the plugin**:
-   - Go back to Obsidian and open the **Settings** menu again.
-   - Go to **Community Plugins**.
-   - Enable the "Lazarus Transcript" plugin.
+### Manual Installation
+
+1. Download the latest release from [GitHub Releases](https://github.com/Fermain/obsidian-lazarus-transcript/releases)
+2. Extract the files to your vault's `.obsidian/plugins/lazarus-transcript/` folder
+3. Reload Obsidian and enable the plugin in **Settings** → **Community Plugins**
 
 ## Usage
 
@@ -75,8 +72,8 @@ This allows you to fine-tune the visual layout of your dialogues to fit the styl
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/Fermain/lazarus-transcript.git
-   cd lazarus-transcript
+   git clone https://github.com/Fermain/obsidian-lazarus-transcript.git
+   cd obsidian-lazarus-transcript
    ```
 
 2. Install dependencies:
@@ -89,7 +86,7 @@ This allows you to fine-tune the visual layout of your dialogues to fit the styl
    npm run build
    ```
 
-4. Copy the `main.js` and `manifest.json` files from the `dist/` folder into your Obsidian plugins folder.
+4. The built files (`main.js`, `manifest.json`, `styles.css`) will be in the root directory, ready for use.
 
 ## License
 

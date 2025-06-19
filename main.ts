@@ -178,8 +178,6 @@ class LazarusSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		containerEl.createEl('h2', { text: 'Lazarus Transcript Settings' });
-
 		// Margin width setting with validation
 		new Setting(containerEl)
 			.setName('Margin Width')
