@@ -29,13 +29,24 @@ jobs:
           npm install
           npm run build
 
+      - name: Get version
+        id: version
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            # Triggered by tag push
+            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            # Triggered manually - read from manifest.json
+            echo "version=$(node -p "require('./manifest.json').version")" >> $GITHUB_OUTPUT
+          fi
+
       - name: Create release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          tag="${GITHUB_REF#refs/tags/}"
-
-          gh release create "$tag" \
-            --title="$tag" \
+          version="${{ steps.version.outputs.version }}"
+          
+          gh release create "$version" \
+            --title="$version" \
             --draft \
             main.js manifest.json styles.css
