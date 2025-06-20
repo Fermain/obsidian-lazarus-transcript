@@ -22,20 +22,33 @@ export default class LazarusPlugin extends Plugin {
 	}
 
 	onunload() {
-		// Clean up global CSS variables
-		document.documentElement.style.removeProperty('--lt-margin-width');
+		// Clean up any classes we added
+		document.body.removeClass('lt-wide-margin', 'lt-narrow-margin', 'lt-auto-margin');
 	}
 
 	applySettings() {
-		const root = document.documentElement;
-
-		// Apply margin width with validation
+		// Remove any existing margin classes
+		document.body.removeClass('lt-wide-margin', 'lt-narrow-margin', 'lt-auto-margin');
+		
+		// Apply CSS class based on margin width setting
 		if (this.isValidCSSLength(this.settings.marginWidth)) {
-			root.style.setProperty('--lt-margin-width', this.settings.marginWidth);
-		} else {
-			// Fallback to default if invalid
-			root.style.setProperty('--lt-margin-width', DEFAULT_SETTINGS.marginWidth);
+			this.applyMarginClass(this.settings.marginWidth);
 		}
+	}
+
+	private applyMarginClass(marginWidth: string) {
+		// Define some common margin classes instead of dynamic styles
+		const widthValue = parseFloat(marginWidth);
+		const unit = marginWidth.replace(/[\d.]/g, '');
+		
+		if (marginWidth === 'auto' || marginWidth.includes('max-content') || marginWidth.includes('min-content')) {
+			document.body.addClass('lt-auto-margin');
+		} else if ((unit === 'rem' && widthValue >= 12) || (unit === 'px' && widthValue >= 192)) {
+			document.body.addClass('lt-wide-margin');
+		} else if ((unit === 'rem' && widthValue <= 6) || (unit === 'px' && widthValue <= 96) || unit === '%') {
+			document.body.addClass('lt-narrow-margin');
+		}
+		// Default (no class) handles the standard 10rem case
 	}
 
 	isValidCSSLength(value: string): boolean {
@@ -181,7 +194,7 @@ class LazarusSettingTab extends PluginSettingTab {
 		// Margin width setting with validation
 		new Setting(containerEl)
 			.setName('Margin Width')
-			.setDesc('Set the margin width around the dialogue. Use CSS units like 10rem, 150px, 20%, auto, or max-content.')
+			.setDesc('Set the margin width around the dialogue. Narrow (≤6rem), Default (10rem), Wide (≥12rem), or Auto (max-content) margins are supported. Use CSS units like 5rem, 15rem, auto, or max-content.')
 			.addText(text => {
 				text
 					.setPlaceholder('10rem')

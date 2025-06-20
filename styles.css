@@ -1,6 +1,6 @@
 .lt {
 	display: grid;
-	grid-template-columns: var(--lt-margin-width, 10rem) 1fr;
+	grid-template-columns: 10rem 1fr; /* Default margin */
 
 	& strong {
 		grid-row: span 2;
@@ -25,4 +25,17 @@
 	& .lt-clickable {
 		cursor: pointer;
 	}
+}
+
+/* Margin width variations */
+.lt-narrow-margin .lt {
+	grid-template-columns: 6rem 1fr;
+}
+
+.lt-wide-margin .lt {
+	grid-template-columns: 15rem 1fr;
+}
+
+.lt-auto-margin .lt {
+	grid-template-columns: max-content 1fr;
 }
