@@ -97,16 +97,16 @@ export default class LazarusPlugin extends Plugin {
             });
             
             // Add click handler for edit functionality
-            this.registerDomEvent(element, 'click', (event) => {
+            this.registerDomEvent(element, 'click', async (event) => {
                 event.preventDefault();
                 const lineIndex = parseInt(element.getAttribute('data-line-index') || '0');
                 const sourceContent = element.getAttribute('data-source-content') || '';
-                this.openEditMode(ctx, lineIndex, sourceContent);
+                await this.openEditMode(ctx, lineIndex, sourceContent);
             });
 			
 			try {
 				// Render markdown for each line of text
-				await MarkdownRenderer.renderMarkdown(line, element, "", this);
+				await MarkdownRenderer.render(this.app, line, element, "", this);
 			} catch (error) {
 				console.error('Lazarus transcript render error:', error);
 				// Fallback to plain text if markdown rendering fails
@@ -115,7 +115,7 @@ export default class LazarusPlugin extends Plugin {
 		}
 	}
 
-	    private openEditMode(ctx: MarkdownPostProcessorContext, lineIndex: number, sourceContent: string) {
+	    private async openEditMode(ctx: MarkdownPostProcessorContext, lineIndex: number, sourceContent: string) {
         // Get the current view
         const view = this.app.workspace.getActiveViewOfType(MarkdownView);
         if (!view) return;
@@ -130,23 +130,25 @@ export default class LazarusPlugin extends Plugin {
         
         // Switch to source mode if in live preview
         if (view.getMode() === 'preview') {
-            view.setState({ mode: 'source' }, { history: false });
+            await view.setState({ mode: 'source' }, { history: false });
         }
 
         // Focus and select the target line
-        setTimeout(() => {
-            const lineContent = editor.getLine(targetLine);
-            const lineStart = { line: targetLine, ch: 0 };
-            const lineEnd = { line: targetLine, ch: lineContent.length };
-            
-            editor.setSelection(lineStart, lineEnd);
-            editor.focus();
-            editor.scrollIntoView({ from: lineStart, to: lineEnd });
-        }, 100); // Small delay to ensure mode switch completes
+        const lineContent = editor.getLine(targetLine);
+        const lineStart = { line: targetLine, ch: 0 };
+        const lineEnd = { line: targetLine, ch: lineContent.length };
+        
+        editor.setSelection(lineStart, lineEnd);
+        editor.focus();
+        editor.scrollIntoView({ from: lineStart, to: lineEnd });
     }
 
-	        private findSourceLineByContent(editor: any, content: string): number {
-        const editorContent = editor.getValue();
+	        private findSourceLineByContent(editor: unknown, content: string): number {
+        if (!editor || typeof editor !== 'object' || !('getValue' in editor)) {
+            return -1;
+        }
+        
+        const editorContent = (editor as any).getValue();
         const lines = editorContent.split('\n');
         
         // Search for the exact line content
@@ -193,7 +195,7 @@ class LazarusSettingTab extends PluginSettingTab {
 
 		// Margin width setting with validation
 		new Setting(containerEl)
-			.setName('Margin Width')
+			.setName('Margin width')
 			.setDesc('Set the margin width around the dialogue. Narrow (≤6rem), Default (10rem), Wide (≥12rem), or Auto (max-content) margins are supported. Use CSS units like 5rem, 15rem, auto, or max-content.')
 			.addText(text => {
 				text
